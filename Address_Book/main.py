@@ -18,6 +18,28 @@ class AddressInDB(Address):
     id: int
 
 
+# Function to create the table
+async def create_table():
+    conn = await aiosqlite.connect('address_book.db')
+    cursor = await conn.cursor()
+    await cursor.execute('''
+        CREATE TABLE IF NOT EXISTS addresses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            latitude REAL NOT NULL,
+            longitude REAL NOT NULL
+        )
+    ''')
+    await conn.commit()
+    await cursor.close()
+    await conn.close()
+
+
+# Run create_table in the background
+import asyncio
+asyncio.create_task(create_table())
+
+
 # API routes
 # Create a new address
 @app.post("/addresses/", response_model=AddressInDB)
@@ -79,7 +101,6 @@ async def get_addresses_nearby(latitude: float, longitude: float, distance: Opti
         cursor = await conn.cursor()
         await cursor.execute("SELECT * FROM addresses")
         addresses = [{"id": row[0], "name": row[1], "latitude": row[2], "longitude": row[3]} for row in await cursor.fetchall()]
-        print(addresses)
         nearby_addresses = []
         for address in addresses:
             if geodesic((latitude, longitude), (address['latitude'], address['longitude'])).kilometers <= distance:
