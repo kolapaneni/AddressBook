@@ -85,12 +85,15 @@ async def get_addresses(address_id: Optional[int] = None):
         cursor = await conn.cursor()
         if address_id is None:
             await cursor.execute("SELECT * FROM addresses")
+            address = await cursor.fetchall()
+            id, name, latitude, longitude = address[0]
         else:
             await cursor.execute("SELECT * FROM addresses WHERE id=?", (address_id,))
             address = await cursor.fetchone()
             if not address:
                 raise HTTPException(status_code=404, detail="Address not found")
-            addresses = [{"id": address[0], "name": address[1], "latitude": address[2], "longitude": address[3]}]
+            id, name, latitude, longitude = address
+        addresses = [{"id": address[0], "name": address[1], "latitude": address[2], "longitude": address[3]}]
         return addresses
 
 
